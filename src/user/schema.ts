@@ -38,7 +38,7 @@ export const loginSchema = z.object({
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/\d/, "Password must contain at least one number")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
+    
 });
 
 export type LoginSchema=z.infer<typeof loginSchema>

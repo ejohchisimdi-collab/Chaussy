@@ -43,7 +43,7 @@ export const logIn=async(req:Request<{},{},LoginSchema>,res:Response)=>{
         throw new NotFoundException("User with email "+loginData.email+" not found")
 
     }
-    if(await !bcrypt.compare(loginData.password, user.password)){
+    if(! await bcrypt.compare(loginData.password, user.password)){
         throw new InvalidCredentialsException("Password Invalid")
     }
     const token=generateToken({userId:user.id,email:user.email})
@@ -58,7 +58,7 @@ export const viewProfile=async(req:Request,res:Response)=>{
     const user=await prisma.user.findUnique({where:{
         id:req.user?.userId
     }}) 
-    return res.json(user)
+    return res.json(toUserDTO(user!))
 }
 
 export const uploadProfilePicture=async(req:Request,res:Response)=>{
@@ -113,7 +113,7 @@ export const viewProfilePicture=async(req:Request,res:Response)=>{
 }
 
 
-function generateAlphaNumCode(length = 8) {
+export function generateAlphaNumCode(length = 8) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let code = '';
   for (let i = 0; i < length; i++) {
