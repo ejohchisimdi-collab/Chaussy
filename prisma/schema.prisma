@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id Int @id @default(autoincrement())
+  name String
+  profileKey String?
+  password String 
+  email String @unique
+  isEmailConfirmed Boolean @default(false)
+}
+
+model PasswordReset{
+  id Int @id @default(autoincrement())
+  passwordKey String
+  email String
+  revoked Boolean
+  issuedAt DateTime @default(now())
+  expiresAt DateTime 
+}
+
+model ConfirmEmail{
+  id Int @id  @default(autoincrement())
+  emailCode String
+  userId Int
+  revoked Boolean
+  issuedAt DateTime @default(now())
+  expiresAt DateTime
+
+}
