@@ -14,11 +14,15 @@ model User{
   password String 
   email String @unique
   isEmailConfirmed Boolean @default(false)
+  registeredAt DateTime @default(now())
+  loggedInAt DateTime?
+  isPremium Boolean @default(false) 
+  homes Home[]
 }
 
 model PasswordReset{
   id Int @id @default(autoincrement())
-  passwordKey String
+  passwordKey String @unique()
   email String
   revoked Boolean
   issuedAt DateTime @default(now())
@@ -27,10 +31,42 @@ model PasswordReset{
 
 model ConfirmEmail{
   id Int @id  @default(autoincrement())
-  emailCode String
+  emailCode String @unique()
   userId Int
   revoked Boolean
   issuedAt DateTime @default(now())
   expiresAt DateTime
+
+}
+
+model Home{
+  id Int @id @default(autoincrement())
+  yearBuilt Int?
+  userId Int
+  user User @relation(fields: [userId],references: [id])
+  propertyType PropertyType
+  profileKey String?
+  address String?
+  createdAt DateTime @default(now())
+  rooms Room[]
+
+}
+
+enum PropertyType{
+  BUNGALOW
+  DUPLEX
+  MANSION
+  APARTMENT
+}
+
+model Room{
+  id Int @id @default(autoincrement())
+  name String
+  roomSize Int?
+  floorLevel Int?
+  homeId Int
+  home Home @relation(fields: [homeId],references: [id])
+  createdAt DateTime @default(now())
+
 
 }

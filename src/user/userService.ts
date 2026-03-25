@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { LoginSchema, RegisterUserSchema } from "./schema.js";
+import { EditUserSchema, LoginSchema, RegisterUserSchema } from "./schema.js";
 import bcrypt from 'bcrypt';
 import { prisma } from "../prisma/client.js";
 import { User } from "@prisma/client";
@@ -10,6 +10,7 @@ import { BadRequestException, ConflictException, InvalidCredentialsException, No
 import { generateToken } from "../middleware/authMiddleware.js";
 import { deleteFromS3, generatePresignedUrl, uploadToS3 } from "../middleware/s3Service.js";
 import { sendEmail } from "../middleware/sendgrid.js";
+import { randomInt } from "crypto";
 
 const toUserDTO=(user:User)=>{return{
     id:user.id,
@@ -46,10 +47,17 @@ export const logIn=async(req:Request<{},{},LoginSchema>,res:Response)=>{
     if(! await bcrypt.compare(loginData.password, user.password)){
         throw new InvalidCredentialsException("Password Invalid")
     }
-    const token=generateToken({userId:user.id,email:user.email})
+return await prisma.$transaction(async(tx)=>{const token=generateToken({userId:user.id,email:user.email})
+
+await tx.user.update({where:{
+    id:req.user?.userId
+},data:{
+    loggedInAt:new Date()
+}})
 
     console.log("User logged in successfully")
-    return res.json(token)
+    return res.json(token)})
+    
 
 }
 
@@ -101,6 +109,23 @@ export const deleteProfilePicture=async(req:Request,res:Response)=>{
 
 }
 
+export const updateProfile=async(req:Request<{},{},EditUserSchema>,res:Response)=>{
+    const body=req.body
+    const userData:Partial<User>={}
+    if(body.name){
+        userData.name=body.name
+    }
+    const user=await prisma.user.update({
+        where:{
+            id:req.user?.userId
+        },
+        data:userData
+        
+    })
+    return res.json(toUserDTO(user))
+
+}
+
 export const viewProfilePicture=async(req:Request,res:Response)=>{
     console.info(`viewing profile picture of user with id ${req.user?.userId}  `)
     const user=await prisma.user.findUnique({where:{
@@ -117,8 +142,7 @@ export function generateAlphaNumCode(length = 8) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let code = '';
   for (let i = 0; i < length; i++) {
-    const idx = Math.floor(Math.random() * chars.length);
-    code += chars[idx];
+    code += chars[randomInt(0, chars.length)];
   }
   return code;
 }
@@ -143,16 +167,16 @@ const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 const text=`
 Hi ${user?.name},
 
-We received a request to reset your Chaussy password. Use the code below to reset your password:
+We received a request to verify your Chaussy email. Use the code below to verify your email:
 
 ${code}
 
-This code will expire in 30 minutes. If you didn't request a password reset, please ignore this email.
+
 
 Thanks,
 The Chaussy Team
 `
-    await sendEmail({to:user?.email!,subject:"Password Reset",text:text})
+    await sendEmail({to:user?.email!,subject:"Email verification",text:text})
 
     console.log(`Code sent successfully`)
     return res.json("email sent")

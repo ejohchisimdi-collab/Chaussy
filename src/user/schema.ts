@@ -22,6 +22,8 @@ export const registerUserSchema = z.object({
     .regex(/[0-9]/, "Must contain a number")
 })
 
+
+
 export type RegisterUserSchema=z.infer<typeof registerUserSchema>
 
 export const loginSchema = z.object({
@@ -43,3 +45,12 @@ export const loginSchema = z.object({
 
 export type LoginSchema=z.infer<typeof loginSchema>
 
+export const EditUserSchema=z.object({
+   name: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces").optional(),
+})
+
+export type EditUserSchema=z.infer<typeof EditUserSchema>

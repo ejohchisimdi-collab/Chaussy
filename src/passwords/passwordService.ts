@@ -21,6 +21,9 @@ return await prisma.$transaction(async(tx)=>{
     if(user===null){
         throw new NotFoundException("Invalid email")
     }
+    if(user.isEmailConfirmed===false){
+        throw new ConflictException("Needs email to be verified for feature to work")
+    }
     const code=generateAlphaNumCode()
     const codeToBeSaved=await bcrypt.hash(code, 10)
     const resetText= `Hi ${user.name},
