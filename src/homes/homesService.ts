@@ -4,9 +4,11 @@ import { prisma } from "../prisma/client.js";
 import { Home, PropertyType } from "@prisma/client";
 import { ConflictException, NotFoundException } from "../middleware/exceptions.js";
 import { deleteFromS3, generatePresignedUrl, uploadToS3 } from "../middleware/s3Service.js";
+import { log } from "console";
 
 export const addHome=async(req:Request<{},{},AddHomeSchema>,res:Response):Promise<Response<Home>>=>{
-   const userHome=await prisma.user.findUnique({where:{id:req.user?.userId},include:{
+   console.info(`Adding home for user with id ${req.user?.userId} at ${new Date()} `)
+    const userHome=await prisma.user.findUnique({where:{id:req.user?.userId},include:{
     homes:true
    }})
    if(userHome!.homes.length>=1 && userHome?.isPremium===false){
@@ -32,11 +34,14 @@ if (req.body.address !== undefined) {
 }
 
 const home=await prisma.home.create({ data });
-    return res.json(home)
+console.info("Home added successfully")
+return res.json(home)
+
 }
 
 
 export const editHome=async(req:Request<{},{},EditHomeSchema>,res:Response)=>{
+    console.log(`Editing home with id ${req.body.homeId} for user with id ${req.user?.userId}`)
     const homeData:Partial<Home>={}
 
     const reqBody=req.body!
@@ -55,12 +60,15 @@ export const editHome=async(req:Request<{},{},EditHomeSchema>,res:Response)=>{
         id:reqBody.homeId,userId:req.user?.userId
     },data:homeData})
 
+    console.log("Home edited successfully")
     return res.json(home)
 
 }
 
 export const addHomeProfilePicture=async(req:Request,res:Response)=>{
+
     const homeId=parseInt(req.params.id)
+     console.log(`Adding profile picture for home with id ${homeId} at ${new Date()}`)
     const home=await prisma.home.findUnique({where:{
         id:homeId,userId:req.user?.userId
 
@@ -75,6 +83,7 @@ export const addHomeProfilePicture=async(req:Request,res:Response)=>{
         },data:{
             profileKey:profileKey
         }})
+        console.info("Picture added successfully")
         return res.json(home)
     })
     
@@ -84,6 +93,7 @@ export const addHomeProfilePicture=async(req:Request,res:Response)=>{
 
 export const deleteHomeProfilePicture=async(req:Request,res:Response)=>{
     const homeId=parseInt(req.params.id)
+    console.log(`Deleting home profile picture for user with id ${req.user?.userId} for home with id ${homeId} at ${new Date()}`)
     const home=await prisma.home.findUnique({where:{
         id:homeId,userId:req.user?.userId
 
@@ -103,6 +113,8 @@ export const deleteHomeProfilePicture=async(req:Request,res:Response)=>{
             profileKey:null
         }})
 
+    
+        console.info(`Profile picture deleted successfully`)
         return res.json("Home picture deleted")
 
 
@@ -110,6 +122,7 @@ export const deleteHomeProfilePicture=async(req:Request,res:Response)=>{
 }
 export const viewHomeProfilePicture=async(req:Request,res:Response)=>{
     const homeId=parseInt(req.params.id)
+    console.info(`Retrieving home profile picture for user with id ${req.user?.userId} for home with id ${homeId} at ${new Date()}`)
     const home=await prisma.home.findUnique({where:{
         id:homeId,userId:req.user?.userId
 
@@ -125,7 +138,11 @@ export const viewHomeProfilePicture=async(req:Request,res:Response)=>{
 }
 
 export const viewHomeByUser=async(req:Request,res:Response)=>{
-    const orderBy=(req.query.orderBy as "asc"||"desc")||"desc"
+    console.info(`Retrieving homes for user with id ${req.user?.userId}`)
+    const orderBy =
+  req.query.orderBy === "asc" || req.query.orderBy === "desc"
+    ? req.query.orderBy
+    : "desc";
     const pageNumber=parseInt(req.query.pageNumber as string)||0
     const pageSize=parseInt(req.query.size as string)||10
     const home=await prisma.home.findMany({where:{

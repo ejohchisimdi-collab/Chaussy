@@ -50,7 +50,7 @@ export const logIn=async(req:Request<{},{},LoginSchema>,res:Response)=>{
 return await prisma.$transaction(async(tx)=>{const token=generateToken({userId:user.id,email:user.email})
 
 await tx.user.update({where:{
-    id:req.user?.userId
+    id:user.id
 },data:{
     loggedInAt:new Date()
 }})

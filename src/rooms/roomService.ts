@@ -6,6 +6,7 @@ import { NotFoundException } from "../middleware/exceptions.js";
 import { EditHomeSchema } from "../homes/schema.js";
 
 export const addRoom=async(req:Request<{},{},AddRoomSchema>,res:Response)=>{
+    console.info(`Adding room for home with id ${req.body.homeId} for user with id ${req.user?.userId}`)
     const roomData:any={}
     if(req.body.floorLevel){
     roomData.floorLevel=req.body.floorLevel
@@ -27,6 +28,7 @@ export const addRoom=async(req:Request<{},{},AddRoomSchema>,res:Response)=>{
 
     const room =await prisma.room.create({data:roomData})
 
+    console.info(`Room added successfully`)
     return res.json(room)
 
 
@@ -34,6 +36,7 @@ export const addRoom=async(req:Request<{},{},AddRoomSchema>,res:Response)=>{
 
 
 export const editRoom=async(req:Request<{},{},EditRoomSchema>,res:Response)=>{
+    console.info(`Editing room for user with id ${req.user?.userId} for room with id${req.body.roomId}`)
     const reqBody=req.body
     const roomData:Partial<Room>={}
 
@@ -55,18 +58,22 @@ export const editRoom=async(req:Request<{},{},EditRoomSchema>,res:Response)=>{
             userId:req.user?.userId
         }
     },data:roomData})
-
+    console.info("Room edited successfully")
     return res.json(room)
 }
 
 export const findRoomsByHomeId=async(req:Request,res:Response)=>{
+    console.log(`Retrieving rooms for user with id ${req.user?.userId} for home with id ${req.params.homeId} `)
     const homeId=parseInt(req.params.homeId as string)
     const pageNumber=parseInt(req.query.pageNumber as string)||0
     const pageSize=parseInt(req.query.size as string)||10
-    const orderBy=(req.query.orderBy as "asc"||"desc")||"desc"
+    const orderBy =
+  req.query.orderBy === "asc" || req.query.orderBy === "desc"
+    ? req.query.orderBy
+    : "desc";
 
     const rooms=await prisma.room.findMany({where:{
-        id:homeId,
+        homeId:homeId,
         home:{
             userId:req.user?.userId
 

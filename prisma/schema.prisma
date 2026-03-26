@@ -17,6 +17,7 @@ model User{
   registeredAt DateTime @default(now())
   loggedInAt DateTime?
   isPremium Boolean @default(false) 
+  asset Assets[]
   homes Home[]
 }
 
@@ -49,6 +50,7 @@ model Home{
   address String?
   createdAt DateTime @default(now())
   rooms Room[]
+  homeAsset HomeAssets[]
 
 }
 
@@ -67,6 +69,37 @@ model Room{
   homeId Int
   home Home @relation(fields: [homeId],references: [id])
   createdAt DateTime @default(now())
+  roomAssets RoomAssets[]
 
 
+}
+
+model Assets{
+  id Int @id @default(autoincrement())
+  name String
+  brandName String?
+  modelName String?
+  purchaseDate DateTime?
+  notes String?
+  roomAssets RoomAssets?
+  homeAssets HomeAssets?
+  userId Int
+  user User @relation(fields: [userId],references: [id])
+  createdAt DateTime @default(now())
+}
+
+model RoomAssets{
+  id Int @id 
+  assets Assets @relation(fields: [id],references: [id])
+  roomId Int
+  room Room @relation(fields: [roomId],references: [id])  
+  createdAt DateTime @default(now())
+}
+
+model HomeAssets{
+  id Int @id
+  assets Assets @relation(fields: [id], references: [id])
+  homeId Int
+  home Home @relation(fields: [homeId],references: [id])
+  createdAt DateTime @default(now())
 }
