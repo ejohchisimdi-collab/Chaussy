@@ -3,8 +3,11 @@ import { CreateHomeAssetSchema, CreateRoomAssetsSchema, EditAssetSChema } from "
 import { Assets, HomeAssets } from "@prisma/client";
 import { prisma } from "../prisma/client.js";
 import { NotFoundException } from "../middleware/exceptions.js";
+import { request } from "http";
+import { log } from "console";
 
 export const createHomeAsset=async(req:Request<{},{},CreateHomeAssetSchema>,res:Response)=>{
+    console.info(`Creating home asset for user with id ${req.user?.userId}`)
     const body=req.body
     const homes =await prisma.home.findUnique({where:{
         id:body.homeId,userId:req.user?.userId
@@ -30,6 +33,7 @@ export const createHomeAsset=async(req:Request<{},{},CreateHomeAssetSchema>,res:
     
                    
     })
+    console.info("Asset created successfully")
     return res.json(homeAssets)
 }
 
@@ -38,6 +42,7 @@ export const createHomeAsset=async(req:Request<{},{},CreateHomeAssetSchema>,res:
 
     
 export const createRoomAsset=async(req:Request<{},{},CreateRoomAssetsSchema>,res:Response)=>{
+    console.info(`Creating room asset for user with id ${req.user?.userId}`)
     const body=req.body
 
     const room =await prisma.room.findUnique({where:{
@@ -63,11 +68,13 @@ export const createRoomAsset=async(req:Request<{},{},CreateRoomAssetsSchema>,res
             }
         }
     }});
+    console.info("Asset created successfully")
     
     return res.json(roomAssets)
 }
 
 export const editAsset=async(req:Request<{},{},EditAssetSChema>,res:Response)=>{
+    console.info(`Editing asset with id ${req.body.assetId} for user with id ${req.user?.userId} `)
     const body=req.body
     const asset=await prisma.assets.findUnique({where:{
         id:body.assetId,userId:req.user?.userId
@@ -102,12 +109,15 @@ const assetData:Partial<Assets>={}
     const updatedAsset=await prisma.assets.update({where:{
         id:body.assetId
     },data:assetData})
+    console.info("Asset edited successfully")
 
     return res.json(updatedAsset)
 }
 
 export const findAssetsByHomeAndUserId=async(req:Request,res:Response)=>{
+    
     const homeId=parseInt(req.params.homeId)
+    console.info(`Retrieving asset by homeId ${homeId} and userId ${req.user?.userId}`)
     const orderBy = req.query.orderBy === "asc" || req.query.orderBy === "desc"
     ? req.query.orderBy
     : "desc";
@@ -128,11 +138,16 @@ export const findAssetsByHomeAndUserId=async(req:Request,res:Response)=>{
 
     },skip:pageNumber*pageSize,take: pageSize})
 
-    return res.json(assets)
+    return res.json(assets.map(assets=>assets.assets))
 }
 
+
 export const findAssetsByRoomAndUserId=async(req:Request,res:Response)=>{
+
+    
     const roomId=parseInt(req.params.roomId)
+    console.info(`Retrieving asset by roomId ${roomId} and userId ${req.user?.userId}`)
+   
     const orderBy = req.query.orderBy === "asc" || req.query.orderBy === "desc"
     ? req.query.orderBy
     : "desc";
@@ -152,7 +167,7 @@ export const findAssetsByRoomAndUserId=async(req:Request,res:Response)=>{
         skip:pageNumber*pageSize,take:pageSize
     })
 
-    return res.json(assets)
+    return res.json(assets.map(assets=>assets.assets))
 
 }
 

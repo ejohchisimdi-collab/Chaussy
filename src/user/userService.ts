@@ -17,7 +17,8 @@ const toUserDTO=(user:User)=>{return{
     name:user.name,
     email:user.email,
     profileKey:user.profileKey,
-    isEmailConfirmed:user.isEmailConfirmed
+    isEmailConfirmed:user.isEmailConfirmed,
+    isPremium:user.isPremium
 
 }}
 
@@ -31,6 +32,10 @@ export const registerUser=async(req:Request<{},{},RegisterUserSchema>,res:Respon
         password:userData.password
     }})
     console.log(`user registered successfully`)
+    const userSetting=await prisma.userSetting.create({data:{
+        enableEmailNotifications:false,
+        userId:user.id
+    }})
     return res.json(toUserDTO(user))
 }
 

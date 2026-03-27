@@ -19,6 +19,7 @@ model User{
   isPremium Boolean @default(false) 
   asset Assets[]
   homes Home[]
+  userSetting UserSetting?
 }
 
 model PasswordReset{
@@ -86,6 +87,7 @@ model Assets{
   userId Int
   user User @relation(fields: [userId],references: [id])
   createdAt DateTime @default(now())
+  warranties Warranties[]
 }
 
 model RoomAssets{
@@ -102,4 +104,47 @@ model HomeAssets{
   homeId Int
   home Home @relation(fields: [homeId],references: [id])
   createdAt DateTime @default(now())
+  
 }
+
+
+model UserSetting{
+  id Int @id @default(autoincrement())
+  enableEmailNotifications Boolean @default(false)
+   userId Int @unique
+  user User @relation(fields: [userId],references: [id])
+
+}
+
+model Warranties{
+  id Int @id @default(autoincrement())
+  providerName String
+  startDate DateTime?
+  expiryDate DateTime
+  coverageNotes String?
+   assetId Int
+  asset Assets @relation(fields: [assetId],references: [id])
+  createdAt DateTime @default(now())
+  warrantyDocuments WarrantyDocuments[]
+  warrantyStatus WarrantyStatus
+
+}
+
+model WarrantyDocuments{
+  id Int @id @default(autoincrement())
+  name String
+  fileSize Int
+  mimeType String
+  warrantyId Int
+  fileKey String?
+  warranties Warranties @relation(fields: [warrantyId],references: [id])
+  createdAt DateTime @default(now())
+  
+}
+
+enum WarrantyStatus{
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+}
+
