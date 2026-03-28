@@ -2,11 +2,28 @@ import { Request, Response } from "express";
 import { AddWarrantySchema, EditWarrantySchema, WarrantyDocumentsSchema } from "./schema.js";
 import { prisma } from "../prisma/client.js";
 import { ConflictException, NotFoundException } from "../middleware/exceptions.js";
-import { Warranties, WarrantyDocuments, WarrantyStatus } from "@prisma/client";
-import { size } from "zod/v4";
+import { Assets, User, Warranties, WarrantyDocuments, WarrantyStatus } from "@prisma/client";
+import { gte, promise, size } from "zod/v4";
 import { deleteFromS3, generatePresignedUrl, uploadToS3 } from "../middleware/s3Service.js";
 import { extractFieldsFromPdf } from "../middleware/gemniMiddleware.js";
 import { v4 as uuidv4 } from "uuid"
+import cron from "node-cron";
+import { sendEmail } from "../middleware/sendgrid.js";
+import { json, text } from "stream/consumers";
+
+const toWarrantyDTO=(warranties:Warranties)=>{
+    return{
+        id:warranties.id,
+        providerName:warranties.providerName,
+        startDate:warranties.startDate,
+        expiryDate:warranties.expiryDate,
+        coverageNotes:warranties.coverageNotes,
+        assetId:warranties.assetId,
+        createdAt:warranties.createdAt,
+        warrantyStatus:warranties.warrantyStatus
+
+    }
+}
 
 export const addWarranty=async(req:Request<{},{},AddWarrantySchema>,res:Response)=>{
 const body=req.body
@@ -46,7 +63,7 @@ if (expiry < now) {
     }})
     console.info("Warranty added successfully")
 
-    return res.json(warranty)
+    return res.json(toWarrantyDTO(warranty))
 
 }
 
@@ -100,7 +117,7 @@ warrantyData.warrantyStatus=warrantyStatus
     },data:warrantyData})
 
     console.info("Warranty Edited successfully")
-    return res.json(updatedWarranty)
+    return res.json(toWarrantyDTO(updatedWarranty))
     
 }
 
@@ -123,7 +140,7 @@ export const findWarrantyByAsset=async(req:Request,res:Response)=>{
         createdAt:orderBy,},
     skip:pageNumber*pageSize,take:pageSize})
 
-    return res.json(warranties)
+    return res.json(warranties.map(warranties=>toWarrantyDTO(warranties)))
 }
 
 export const uploadDocuments=async(req:Request<{warrantyId:string},{},WarrantyDocumentsSchema>,res:Response)=>{
@@ -293,7 +310,7 @@ if (expiry < now) {
             }
         }
     }})
-    return res.json(warranty)
+    return res.json(toWarrantyDTO(warranty))
     
     
 
@@ -303,4 +320,219 @@ if (expiry < now) {
 
 
 }
+
+
+
+const changeWarrantyStatus=cron.schedule("0 9 * * *", async()=>{
+console.info("Changing warranty status")
+    const now = new Date();
+const thirtyDaysFromNow = new Date();
+thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    await prisma.warranties.updateMany({
+  where: { expiryDate: { lt: now } },
+  data: { warrantyStatus: WarrantyStatus.EXPIRED },
+});
+
+await prisma.warranties.updateMany({
+  where: {
+    expiryDate: { gte: now, lt: thirtyDaysFromNow },
+  },
+  data: { warrantyStatus: WarrantyStatus.EXPIRING_SOON },
+});
+
+await prisma.warranties.updateMany({where:{
+        expiryDate: { gt: thirtyDaysFromNow } 
+    },data:{
+        warrantyStatus:WarrantyStatus.ACTIVE
+    }})
+    console.info("Warranty status changed")
+
+
+})
+changeWarrantyStatus.start()
+
+const sendWarrantyExpiryEMail=async(warranty:Warranties,asset:Assets,user:User)=>{
+    const text= `
+Hello,
+
+This is a reminder that your warranty for "${asset.name}" is set to expire on ${warranty.expiryDate.toDateString()}.
+
+Please take any necessary action before it expires.
+
+Thank you,
+Chaussy Team
+    `
+  
+    await sendEmail({to:user.email,subject:"Warranty Reminder",text:text})
+}
+
+const sendExpiryEmail=async(warranty:Warranties,asset:Assets,user:User)=>{
+   const text = `
+Hello,
+
+This is a notification that your warranty for "${asset.name}" has expired on ${warranty.expiryDate.toDateString()}.
+
+Please take any necessary action if you wish to renew or review coverage.
+
+Thank you,
+Chaussy Team
+`;
+
+await sendEmail({to:user.email,subject:"Warranty Expired",text:text})
+    
+}
+
+const send30DayEmail=cron.schedule("0 9 * * *", async()=>{
+console.info("Sending 30 day email for warranties")   
+    const now = new Date();
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+  const warranties = await prisma.warranties.findMany({
+    where: {
+      expiryDate: {
+        lte: thirtyDaysFromNow,  // less than or equal to 30 days from now
+        gte: new Date(now.getDate()+8)                 // and greater than or equal to today
+      },thirtyDayNotification:false,asset:{
+        user:{
+            userSetting:{
+                enableEmailNotifications:true
+            }
+        }
+      }
+    },
+    include:{
+        asset:{
+            include:{
+                user:true
+                
+            }
+        }
+            
+        
+        
+    }
+    
+    
+  }
+);
+
+ await Promise.all(warranties.map(warranties=> sendWarrantyExpiryEMail(warranties,warranties.asset,warranties.asset.user)))
+ 
+ const warrantyIds=warranties.map(w=>w.id)
+ 
+ await prisma.warranties.updateMany({where:{id:{in: warrantyIds}   
+  },data:{
+    thirtyDayNotification:true
+  }})
+
+  console.info("Emails sent successfully")
+  
+  
+
+})
+send30DayEmail.start()
+
+const send7DayEmail=cron.schedule("0 9 * * *", async()=>{
+   console.info("Sending seven day notification")
+    const now = new Date();
+  const sevenDaysFromNow = new Date();
+  sevenDaysFromNow.setDate(now.getDate() + 7);
+
+  const warranties = await prisma.warranties.findMany({
+    where: {
+      expiryDate: {
+        lte: sevenDaysFromNow,  // less than or equal to 30 days from now
+        gte: now                 // and greater than or equal to today
+      },sevenDayNotification:false,asset:{
+        user:{
+            userSetting:{
+                enableEmailNotifications:true
+            }
+        }
+      }
+    },
+    include:{
+        asset:{
+            include:{
+                user:true
+                
+            }
+        }
+            
+        
+        
+    }
+    
+  })
+  ;
+
+ await Promise.all(warranties.map(warranties=> sendWarrantyExpiryEMail(warranties,warranties.asset,warranties.asset.user)))
+ 
+ const warrantyIds=warranties.map(w=>w.id)
+ 
+ await prisma.warranties.updateMany({where:{id:{in: warrantyIds}   
+  },data:{
+    sevenDayNotification:true
+  }})
+  
+console.info("Notification sent successfully")
+})
+
+send7DayEmail.start()
+
+
+const sendExpiryDayEmail=cron.schedule("0 9 * * *", async()=>{
+console.info("Sending expiry day notification for warranties")
+    const now = new Date();
+    // Yesterday
+const yesterday = new Date();
+yesterday.setDate(now.getDate() - 1);
+
+// Start of yesterday
+const startOfYesterday = new Date(yesterday);
+startOfYesterday.setUTCHours(0, 0, 0, 0);
+
+// End of yesterday
+const endOfYesterday = new Date(yesterday);
+endOfYesterday.setUTCHours(23, 59, 59, 999);
+
+const warranties = await prisma.warranties.findMany({
+  where: {
+    expiryDate: {
+      gte: startOfYesterday,
+      lte: endOfYesterday,
+    },finalNotification:false,
+    asset: {
+      user: {
+        userSetting: {
+          enableEmailNotifications: true,
+        },
+      },
+    },
+  },
+  include: {
+    asset: {
+      include: {
+        user: true,
+      },
+    },
+  },
+});
+
+ await Promise.all(warranties.map(warranties=> sendExpiryEmail(warranties,warranties.asset,warranties.asset.user)))
+ 
+ const warrantyIds=warranties.map(w=>w.id)
+ 
+ await prisma.warranties.updateMany({where:{id:{in: warrantyIds}   
+  },data:{
+    finalNotification:true
+  }})
+
+ 
+  
+console.info("Expiry sent successfully")
+})
+ sendExpiryDayEmail.start()
 

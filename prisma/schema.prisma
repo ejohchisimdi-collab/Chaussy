@@ -127,6 +127,9 @@ model Warranties{
   createdAt DateTime @default(now())
   warrantyDocuments WarrantyDocuments[]
   warrantyStatus WarrantyStatus
+  thirtyDayNotification Boolean @default(false)
+  sevenDayNotification Boolean @default(false)
+  finalNotification Boolean @default(false)
 
 }
 

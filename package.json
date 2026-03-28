@@ -25,7 +25,8 @@
    "@aws-sdk/client-s3": "^3.600.0",
     "@aws-sdk/lib-storage": "^3.600.0",
     "@aws-sdk/s3-request-presigner": "^3.600.0",
-     "uuid": "^9.0.0"
+     "uuid": "^9.0.0",
+      "node-cron": "^3.0.3"
   },
   "devDependencies": {
     "@types/pdf-parse": "^1.1.2",
@@ -38,6 +39,7 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",
     "@types/multer": "^1.4.11",
-    "@types/uuid": "^9.0.1"
+    "@types/uuid": "^9.0.1",
+    "@types/node-cron": "3.0.0"
   }
 }
