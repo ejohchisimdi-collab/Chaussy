@@ -11,6 +11,7 @@ import { warrantyRouter } from "./Warranty/warrantyRoutes.js";
 import { deleteRouter } from "./deletes/deleteRoutes.js";
 import { refreshRouter } from "./refresh/refreshRoutes.js";
 import cookieParser from "cookie-parser";
+import { exportRouter } from "./exports/exportRoutes.js";
 
 
 dotenv.config();
@@ -27,5 +28,6 @@ app.use("/api/v1/settings",userSettingsRouter)
 app.use("/api/v1/warranties",warrantyRouter)
 app.use("/api/v1/deletes",deleteRouter)
 app.use("/api/v1/refresh",refreshRouter)
+app.use("/api/v1/exports",exportRouter)
 app.use(errorHandler)
 

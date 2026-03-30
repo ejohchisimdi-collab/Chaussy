@@ -26,11 +26,16 @@ const toUserDTO=(user:User)=>{return{
 export const registerUser=async(req:Request<{},{},RegisterUserSchema>,res:Response)=>{
     console.log(`Registering user with email ${req.body.email} at ${new Date()}`)
     req.body.password=await bcrypt.hash(req.body.password, 10)
+   if(req.body.acceptedPrivacyPolicy!==true){
+    throw new ConflictException("Privacy policy needs to be accepted at signup")
+   }
     const userData=req.body
     const user=await prisma.user.create({data:{
         name:userData.name,
         email:userData.email,
-        password:userData.password
+        password:userData.password,
+        acceptedV1PrivacyPolicy:userData.acceptedPrivacyPolicy
+
     }})
     console.log(`user registered successfully`)
     const userSetting=await prisma.userSetting.create({data:{
@@ -51,6 +56,10 @@ export const logIn = async (req: Request<{}, {}, LoginSchema>, res: Response) =>
 
   if (!await bcrypt.compare(req.body.password, user.password)) {
     throw new InvalidCredentialsException("Password Invalid");
+  }
+
+  if(user.acceptedV1PrivacyPolicy===false){
+    throw new ConflictException("Privacy policy not accepted")
   }
 
   return await prisma.$transaction(async (tx) => {

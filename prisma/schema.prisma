@@ -21,6 +21,7 @@ model User{
   homes Home[]
   userSetting UserSetting?
   refreshToken RefreshToken[]
+  acceptedV1PrivacyPolicy Boolean @default(false)
 }
 
 model PasswordReset{
