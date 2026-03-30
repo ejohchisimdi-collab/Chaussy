@@ -131,7 +131,7 @@ model Warranties{
   thirtyDayNotification Boolean @default(false)
   sevenDayNotification Boolean @default(false)
   finalNotification Boolean @default(false)
-
+  isAiExtracted Boolean @default(false)
 }
 
 model WarrantyDocuments{

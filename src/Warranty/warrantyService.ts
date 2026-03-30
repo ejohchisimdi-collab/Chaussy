@@ -32,6 +32,22 @@ console.info(`Adding warranty for user with id ${req.user?.userId} `)
         id:body.assetId,userId:req.user?.userId
     }})
 
+    const verifiedWarranties=await prisma.warranties.findMany({where:{
+        asset:{
+            userId:req.user?.userId
+        }
+    }})
+
+    const user=await prisma.user.findUnique({where:{
+        id:req.user?.userId
+    }})
+
+    if(verifiedWarranties.length>15&&user?.isPremium===false){
+        throw new ConflictException("Max number of warranties which is 15 has been exceeded please upgrade to premium to unlock unlimited warranties. Feature coming soon")
+    }
+
+
+
     if(asset===null){
         throw new NotFoundException(`Asset with id ${body.assetId} and user Id ${req.user?.userId} not found`)
     }
@@ -144,6 +160,24 @@ export const findWarrantyByAsset=async(req:Request,res:Response)=>{
 }
 
 export const uploadDocuments=async(req:Request<{warrantyId:string},{},WarrantyDocumentsSchema>,res:Response)=>{
+    const verificationWarrantyDocuments=await prisma.warrantyDocuments.findMany({where:{
+        warranties:{
+            asset:{
+                userId:req.user?.userId
+            }
+        }
+    }})
+
+    const user=await prisma.user.findUnique({where:{
+        id:req.user?.userId
+    }})
+
+    const totalData=verificationWarrantyDocuments.reduce((acc,current)=>{ return acc+current.fileSize},0)
+    const fileSizeLimit=50*1024*1024
+    if(totalData>fileSizeLimit&&user?.isPremium===false){
+        throw new ConflictException("Max size for warranty documents exceeded (more than 50 mb ) upgrade to premium for unlimited amount of documents feature coming soon")
+
+    }
     const warrantyId=parseInt(req.params.warrantyId)
     console.info(`Uploading warranty documents for warranty with id ${warrantyId} for user with id ${req.user?.userId}`)
     const warranty=await prisma.warranties.findUnique({where:{
@@ -253,6 +287,21 @@ export const findWarrantyDocumentLink=async(req:Request,res:Response)=>{
 }
 
 export const extractWarrantyInfoFromPdf=async(req:Request,res:Response)=>{
+    console.info(`Extracting pdf warranty for user with id ${req.user?.userId}`)
+    const verificationWarranties=await prisma.warranties.findMany({where:{
+        asset:{
+            userId:req.user?.userId,
+            
+        },
+        isAiExtracted:true
+    }})
+    const user=await prisma.user.findUnique({where:{
+        id:req.user?.userId
+    }})
+
+    if(verificationWarranties.length>3&&user?.isPremium===false){
+        throw new ConflictException("U have exceeded the max limit for uploads which is 3 uploads please upgrade to premium, feature coming soon")
+    }
     const assetId=parseInt(req.params.assetId)
     const file=req.file!
 
@@ -295,12 +344,17 @@ if (expiry < now) {
     const fileName = `${req.user?.userId}_${Date.now()}_${uuidv4()}.pdf`
     const fileKey=await uploadToS3(req.file!)
     const warranty=await tx.warranties.create({data:{
-        providerName,startDate: new Date(startDate),expiryDate: new Date(expiryDate),coverageNotes,warrantyStatus,warrantyDocuments:{
+        providerName,startDate: new Date(startDate),
+        expiryDate: new Date(expiryDate),
+        coverageNotes,warrantyStatus,
+        isAiExtracted:true,
+        warrantyDocuments:{
             create:{
                 name:fileName,
                 mimeType:file.mimetype,
                 fileSize:file.size,
-                fileKey:fileKey
+                fileKey:fileKey,
+            
             }
         },asset:{
             connect:{
