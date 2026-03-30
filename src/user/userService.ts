@@ -11,6 +11,7 @@ import { generateToken } from "../middleware/authMiddleware.js";
 import { deleteFromS3, generatePresignedUrl, uploadToS3 } from "../middleware/s3Service.js";
 import { sendEmail } from "../middleware/sendgrid.js";
 import { randomInt } from "crypto";
+import { generateRefreshToken, setRefreshCookie } from "../refresh/refreshService.js";
 
 const toUserDTO=(user:User)=>{return{
     id:user.id,
@@ -39,33 +40,31 @@ export const registerUser=async(req:Request<{},{},RegisterUserSchema>,res:Respon
     return res.json(toUserDTO(user))
 }
 
-export const logIn=async(req:Request<{},{},LoginSchema>,res:Response)=>{
-    console.log(`Logging in user with email ${req.body.email} at ${new Date()}`)
-    const loginData=req.body
-    const user=await prisma.user.findUnique({where:{
-        email:loginData.email
-    }})
-    if(user===null){
-        throw new NotFoundException("User with email "+loginData.email+" not found")
+export const logIn = async (req: Request<{}, {}, LoginSchema>, res: Response) => {
+  console.log(`Logging in user with email ${req.body.email} at ${new Date()}`);
 
-    }
-    if(! await bcrypt.compare(loginData.password, user.password)){
-        throw new InvalidCredentialsException("Password Invalid")
-    }
-return await prisma.$transaction(async(tx)=>{const token=generateToken({userId:user.id,email:user.email})
+  const user = await prisma.user.findUnique({ where: { email: req.body.email } });
 
-await tx.user.update({where:{
-    id:user.id
-},data:{
-    loggedInAt:new Date()
-}})
+  if (user === null) {
+    throw new NotFoundException("User with email " + req.body.email + " not found");
+  }
 
-    console.log("User logged in successfully")
-    return res.json(token)})
-    
+  if (!await bcrypt.compare(req.body.password, user.password)) {
+    throw new InvalidCredentialsException("Password Invalid");
+  }
 
-}
+  return await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { loggedInAt: new Date() } });
 
+    const accessToken = generateToken({ userId: user.id, email: user.email });
+    const refreshToken = await generateRefreshToken(user.id);
+
+    setRefreshCookie(res, refreshToken);
+
+    console.log("User logged in successfully");
+    return res.json({ accessToken });
+  });
+};
 export const viewProfile=async(req:Request,res:Response)=>{
     console.log(`Viewing profile of user with id ${req.user?.userId}`)
     const user=await prisma.user.findUnique({where:{

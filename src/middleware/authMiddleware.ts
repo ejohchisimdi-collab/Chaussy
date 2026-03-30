@@ -41,7 +41,7 @@ declare global {
 
 
 const SECRET = process.env.JWT_SECRET!;
-const EXPIRY = "7d";
+const EXPIRY = "15m";
 
 export interface JwtPayload {
     userId: number;
@@ -56,3 +56,4 @@ export const generateToken = (payload: JwtPayload): string => {
 export const verifyToken = (token: string): JwtPayload => {
     return jwt.verify(token, SECRET) as JwtPayload;
 };
+

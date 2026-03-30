@@ -199,10 +199,8 @@ export const deleteWarrantyDocuments=async(req:Request,res:Response)=>{
         }
         await deleteFromS3(warrantyDocument.fileKey)
 
-        await prisma.warrantyDocuments.update({where:{
+        await tx.warrantyDocuments.delete({where:{
             id:documentId
-        },data:{
-            fileKey:null
         }})
         console.info("Document deleted successfully")
         return res.json("Document deleted")
@@ -388,12 +386,14 @@ console.info("Sending 30 day email for warranties")
     const now = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(now.getDate() + 30);
+  const eightDaysFromNow=new Date()
+  eightDaysFromNow.setDate(now.getDate()+8)
 
   const warranties = await prisma.warranties.findMany({
     where: {
       expiryDate: {
         lte: thirtyDaysFromNow,  // less than or equal to 30 days from now
-        gte: new Date(now.getDate()+8)                 // and greater than or equal to today
+        gte: eightDaysFromNow             // and greater than or equal to today
       },thirtyDayNotification:false,asset:{
         user:{
             userSetting:{

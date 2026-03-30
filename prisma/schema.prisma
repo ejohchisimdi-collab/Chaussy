@@ -20,6 +20,7 @@ model User{
   asset Assets[]
   homes Home[]
   userSetting UserSetting?
+  refreshToken RefreshToken[]
 }
 
 model PasswordReset{
@@ -149,5 +150,12 @@ enum WarrantyStatus{
   ACTIVE
   EXPIRING_SOON
   EXPIRED
+}
+
+model RefreshToken {
+  token   String  @id
+  revoked Boolean @default(false)
+  userId  Int
+  user    User    @relation(fields: [userId], references: [id],onDelete: Cascade)
 }
 
