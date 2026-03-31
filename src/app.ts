@@ -12,6 +12,8 @@ import { deleteRouter } from "./deletes/deleteRoutes.js";
 import { refreshRouter } from "./refresh/refreshRoutes.js";
 import cookieParser from "cookie-parser";
 import { exportRouter } from "./exports/exportRoutes.js";
+import { oauthRouter } from "./googleOauth/oauthRouter.js";
+import { generalLimiter } from "./middleware/ratelimtiMiddleware.js";
 
 
 dotenv.config();
@@ -19,6 +21,7 @@ dotenv.config();
 export const app: Application = express();
 app.use(cookieParser());
 app.use(express.json());
+app.use(generalLimiter)
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/passwords",passwordRouter)
 app.use("/api/v1/homes",homeRouter)
@@ -29,5 +32,6 @@ app.use("/api/v1/warranties",warrantyRouter)
 app.use("/api/v1/deletes",deleteRouter)
 app.use("/api/v1/refresh",refreshRouter)
 app.use("/api/v1/exports",exportRouter)
+app.use("/api/v1/oauth/google",oauthRouter)
 app.use(errorHandler)
 
