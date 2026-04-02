@@ -58,6 +58,7 @@ export const googleCallback = async (req: Request, res: Response) => {
     user = await prisma.user.create({
       data: {
         email,
+        acceptedV1PrivacyPolicy:true,
         name: name ?? email,
         password: googleId,          // unusable password — OAuth users can't log in with password
         isEmailConfirmed: true,      // Google email is already verified

@@ -84,7 +84,7 @@ export const viewProfile=async(req:Request,res:Response)=>{
 
 export const uploadProfilePicture=async(req:Request,res:Response)=>{
     console.log(`Uploading profile picture for user with id ${req.user?.userId}`)
-return await prisma.$transaction(async(tx)=>{  if(req.file==null){
+return await prisma.$transaction(async(tx)=>{  if(!req.file){
         throw new ConflictException("File needed")
     }
     const key=await uploadToS3(req.file)
