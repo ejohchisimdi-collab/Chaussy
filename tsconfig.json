@@ -8,11 +8,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
+   "include": [
+    "src/**/*"
+  ],
   "exclude": [
-    "node_modules",
-    "tests",
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "jest.config.ts"
+    "node_modules"
   ]
 }

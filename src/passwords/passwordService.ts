@@ -10,7 +10,7 @@ import { email } from "zod/v4";
 
 export const generatePassWordReset=async(req:Request,res:Response)=>{
 const email=req.query.email as string
-if(email===null){
+if(!email){
     throw new ConflictException("email query param expected")
 }
 const expiresAt = new Date(Date.now() + 30 * 60 * 1000);

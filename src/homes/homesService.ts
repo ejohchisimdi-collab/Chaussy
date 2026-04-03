@@ -5,7 +5,6 @@ import { Home, PropertyType } from "@prisma/client";
 import { ConflictException, NotFoundException } from "../middleware/exceptions.js";
 import { deleteFromS3, generatePresignedUrl, uploadToS3 } from "../middleware/s3Service.js";
 import { log } from "console";
-
 export const addHome=async(req:Request<{},{},AddHomeSchema>,res:Response):Promise<Response<Home>>=>{
    console.info(`Adding home for user with id ${req.user?.userId} at ${new Date()} `)
     const userHome=await prisma.user.findUnique({where:{id:req.user?.userId},include:{
