@@ -8,7 +8,7 @@ import { log } from "console";
 
 export const createHomeAsset=async(req:Request<{},{},CreateHomeAssetSchema>,res:Response)=>{
 
-    const assetsToVerify=await prisma.assets.findMany({where:{
+    const assetsToVerify=await prisma.assets.count({where:{
         userId:req.user?.userId
     }})
 
@@ -16,7 +16,7 @@ export const createHomeAsset=async(req:Request<{},{},CreateHomeAssetSchema>,res:
         id:req.user?.userId
     }})
 
-    if(assetsToVerify.length>20 &&user?.isPremium===false){
+    if(assetsToVerify>20 &&user?.isPremium===false){
         throw new ConflictException("Asset exceeded max number which is 20 per user upgrade to premium for unlimited storage feature coming soon ")
     }
 
@@ -56,7 +56,7 @@ export const createHomeAsset=async(req:Request<{},{},CreateHomeAssetSchema>,res:
     
 export const createRoomAsset=async(req:Request<{},{},CreateRoomAssetsSchema>,res:Response)=>{
     console.info(`Creating room asset for user with id ${req.user?.userId}`)
-     const assetsToVerify=await prisma.assets.findMany({where:{
+     const assetsToVerify=await prisma.assets.count({where:{
         userId:req.user?.userId
     }})
 
@@ -64,7 +64,7 @@ export const createRoomAsset=async(req:Request<{},{},CreateRoomAssetsSchema>,res
         id:req.user?.userId
     }})
 
-    if(assetsToVerify.length>20 &&user?.isPremium===false){
+    if(assetsToVerify>20 &&user?.isPremium===false){
         throw new ConflictException("Asset exceeded max number which is 20 per user upgrade to premium for unlimited storage feature coming soon ")
     }
 

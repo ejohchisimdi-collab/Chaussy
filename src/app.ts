@@ -14,6 +14,7 @@ import cookieParser from "cookie-parser";
 import { exportRouter } from "./exports/exportRoutes.js";
 import { oauthRouter } from "./googleOauth/oauthRouter.js";
 import { generalLimiter } from "./middleware/ratelimtiMiddleware.js";
+import { requestPremiumRouter } from "./requestPremium/requestPremiumRoutes.js";
 
 
 dotenv.config();
@@ -33,5 +34,6 @@ app.use("/api/v1/deletes",deleteRouter)
 app.use("/api/v1/refresh",refreshRouter)
 app.use("/api/v1/exports",exportRouter)
 app.use("/api/v1/oauth/google",oauthRouter)
+app.use("/api/v1/request-premium",requestPremiumRouter)
 app.use(errorHandler)
 

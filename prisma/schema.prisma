@@ -22,6 +22,7 @@ model User{
   userSetting UserSetting?
   refreshToken RefreshToken[]
   acceptedV1PrivacyPolicy Boolean @default(false)
+  requestPremium RequestPremium?
 }
 
 model PasswordReset{
@@ -158,5 +159,12 @@ model RefreshToken {
   revoked Boolean @default(false)
   userId  Int
   user    User    @relation(fields: [userId], references: [id],onDelete: Cascade)
+}
+
+model RequestPremium{
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  timesRequested Int
+  user User @relation(fields: [userId],references: [id])
 }
 

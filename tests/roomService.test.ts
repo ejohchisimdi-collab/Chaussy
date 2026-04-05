@@ -52,7 +52,7 @@ describe("Add Room",()=>{
         (prismaMock.room.create as ReturnType<typeof vi.fn>).mockResolvedValue({})
 
         await expect(addRoom(req as Request,res as Response)).rejects.toThrow(NotFoundException)
-
+ 
     })
 
 })
