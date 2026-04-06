@@ -1,5 +1,5 @@
 {
-  "name": "express-ts-prisma-template",
+  "name": "chaussy",
   "version": "1.0.0",
   "description": "Express + TypeScript + Prisma + Zod + JWT template",
   "main": "dist/server.js",
