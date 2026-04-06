@@ -15,11 +15,28 @@ import { exportRouter } from "./exports/exportRoutes.js";
 import { oauthRouter } from "./googleOauth/oauthRouter.js";
 import { generalLimiter } from "./middleware/ratelimtiMiddleware.js";
 import { requestPremiumRouter } from "./requestPremium/requestPremiumRoutes.js";
+import { ALLOWED_ORIGINS } from "./config.js";
+import cors from "cors";
 
 
 dotenv.config();
 
 export const app: Application = express();
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,         // required for cookies (refresh token)
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(cookieParser());
 app.use(express.json());
 app.use(generalLimiter)

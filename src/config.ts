@@ -1,3 +1,6 @@
+export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : ["http://localhost:5173", "http://localhost:3000"];
 const REQUIRED_ENV_VARS = [
   "JWT_SECRET",
   "DATABASE_URL",
@@ -11,6 +14,7 @@ const REQUIRED_ENV_VARS = [
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "GOOGLE_REDIRECT_URI",
+  "ALLOWED_ORIGINS"
 ] as const;
 
 export const validateEnv = () => {
