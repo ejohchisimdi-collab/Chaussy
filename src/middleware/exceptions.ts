@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import { Prisma } from "@prisma/client";
 /*
 ────────────────────────────────
 BASE EXCEPTION
@@ -86,6 +87,11 @@ export const errorHandler = (
     }));
 
     return res.status(400).json({ errors });
+  }
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === "P2002") {
+      return res.status(409).json({ message: "Email already in use" });
+    }
   }
 
   const status = err.status || 500;
