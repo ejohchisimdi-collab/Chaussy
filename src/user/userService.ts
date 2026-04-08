@@ -145,7 +145,7 @@ export const viewProfilePicture=async(req:Request,res:Response)=>{
         id:req.user?.userId
     }})
     if(user?.profileKey===null){
-        throw new ConflictException("user with id "+user?.id+" has no profile pictures")
+       return;
     }
     return res.json(await generatePresignedUrl(user?.profileKey!))
 }

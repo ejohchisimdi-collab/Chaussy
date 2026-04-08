@@ -74,8 +74,14 @@ export const googleCallback = async (req: Request, res: Response) => {
   const accessToken = generateToken({ userId: user.id, email: user.email });
   const refreshToken = await generateRefreshToken(user.id);
   setRefreshCookie(res, refreshToken);
+if (!accessToken) {
+  console.error("Access token not generated");
+  return res.status(500).send("OAuth failed: no token generated");
+}
 
-  return  res.redirect(
-  `${process.env.FRONTEND_URL}/oauth/callback?token=${accessToken}`
-);
+// Encode the token to be safe in URL
+const redirectUrl = `${process.env.FRONTEND_URL}/oauth/callback?token=${encodeURIComponent(accessToken)}`;
+
+return res.redirect(redirectUrl);
+  
 };

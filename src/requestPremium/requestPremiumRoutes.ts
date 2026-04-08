@@ -6,4 +6,4 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 
 export const requestPremiumRouter=Router()
 
-requestPremiumRouter.post("/",sensitiveRouteLimiter,authMiddleware,asyncHandler(requestPremium))
+requestPremiumRouter.post("/",authLimiter,authMiddleware,asyncHandler(requestPremium))

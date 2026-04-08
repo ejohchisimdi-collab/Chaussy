@@ -5,13 +5,13 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 import { deleteProfilePicture, generateEmailConfirmationCode, logIn, registerUser, updateProfile, uploadProfilePicture, verifyEmail, viewProfile, viewProfilePicture } from "./userService.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { uploadPhoto } from "../middleware/multerMiddleWare.js";
-import { authLimiter, sensitiveRouteLimiter } from "../middleware/ratelimtiMiddleware.js";
+import { authLimiter, generalLimiter, sensitiveRouteLimiter } from "../middleware/ratelimtiMiddleware.js";
 
 export const userRouter=Router()
 
-userRouter.post("/register",authLimiter,validate(registerUserSchema),asyncHandler(registerUser))
+userRouter.post("/register",generalLimiter,validate(registerUserSchema),asyncHandler(registerUser))
 
-userRouter.post("/login",authLimiter,validate(loginSchema),asyncHandler(logIn))
+userRouter.post("/login",generalLimiter,validate(loginSchema),asyncHandler(logIn))
 
 userRouter.get("/profiles",authMiddleware,asyncHandler(viewProfile))
 
@@ -25,7 +25,7 @@ userRouter.get("/picture",authMiddleware,asyncHandler(viewProfilePicture))
 
 
 
-userRouter.post("/email/generation",sensitiveRouteLimiter,authMiddleware,asyncHandler(generateEmailConfirmationCode))
+userRouter.post("/email/generation",authLimiter,authMiddleware,asyncHandler(generateEmailConfirmationCode))
 
 userRouter.post("/email/confirmation",authMiddleware,asyncHandler(verifyEmail))
 

@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { logout, refresh } from "./refreshService.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { authLimiter } from "../middleware/ratelimtiMiddleware.js";
+import { authLimiter, generalLimiter } from "../middleware/ratelimtiMiddleware.js";
 
 export const refreshRouter=Router()
 
-refreshRouter.post("/",authLimiter,asyncHandler(refresh))
+refreshRouter.post("/",generalLimiter,asyncHandler(refresh))
 
-refreshRouter.post("/logout",authLimiter,asyncHandler(logout))
+refreshRouter.post("/logout",generalLimiter,asyncHandler(logout))
 

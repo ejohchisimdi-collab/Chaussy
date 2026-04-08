@@ -9,7 +9,8 @@ import z from "zod";
 import { email } from "zod/v4";
 
 export const generatePassWordReset=async(req:Request,res:Response)=>{
-const email=req.query.email as string
+console.info(`Generating code for password reset for user with email ${req.query.email} `)
+    const email=req.query.email as string
 if(!email){
     throw new ConflictException("email query param expected")
 }
@@ -47,7 +48,7 @@ If you didn’t request this, you can safely ignore this email.
     }})
 
  await sendEmail({to:user.email,subject:"Password Reset",text:resetText})
-
+console.info("Password code sent successfully")
     return res.json("Message sent")
 
 
@@ -56,6 +57,8 @@ If you didn’t request this, you can safely ignore this email.
 }
 
 export const confirmPasswordReset=async(req:Request<{},{},ConfirmPasswordResetSchema>,res:Response)=>{
+    
+    console.info(`confirming password reset for user with email ${req.body.email} `)
     const passwordData=req.body
 
 return await prisma.$transaction(async(tx)=>{
@@ -94,7 +97,7 @@ if(passwordReset===null){
             revoked:true
         }})
 
-    
+    console.info("Password reset sucessfully")
         return res.json("Password Changed")
 
     
