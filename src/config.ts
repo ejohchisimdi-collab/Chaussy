@@ -14,7 +14,8 @@ const REQUIRED_ENV_VARS = [
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "GOOGLE_REDIRECT_URI",
-  "ALLOWED_ORIGINS"
+  "ALLOWED_ORIGINS",
+  "FRONTEND_URL"
 ] as const;
 
 export const validateEnv = () => {

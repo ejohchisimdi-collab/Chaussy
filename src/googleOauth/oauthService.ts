@@ -75,5 +75,7 @@ export const googleCallback = async (req: Request, res: Response) => {
   const refreshToken = await generateRefreshToken(user.id);
   setRefreshCookie(res, refreshToken);
 
-  return res.json({ accessToken });
+  return  res.redirect(
+  `${process.env.FRONTEND_URL}/oauth/callback?token=${accessToken}`
+);
 };
