@@ -5,6 +5,7 @@ import { UserSetting } from "@prisma/client";
 import { ConflictException } from "../middleware/exceptions.js";
 
 export const editUserSetting=async(req:Request<{},{},EditUserSettingSchema>,res:Response)=>{
+    console.info(`Editing user settings of user with id ${req.user?.userId}`)
     const user=await prisma.user.findUnique({where:{id:req.user?.userId}})
 
     const userSettingData:Partial<UserSetting>={}
@@ -23,10 +24,12 @@ export const editUserSetting=async(req:Request<{},{},EditUserSettingSchema>,res:
 
     },data:userSettingData})
 
+    console.info("User setting edited successfully")
     return res.json(userSetting)
 }
 
 export const findUserSettingByUserId=async(req:Request,res:Response)=>{
+    console.info(`Retrieving user setting of user with id ${req.user?.userId}`)
     return res.json(await prisma.userSetting.findUnique({where:{
         userId:req.user?.userId
     }}))

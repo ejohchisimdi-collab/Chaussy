@@ -102,7 +102,7 @@ export const deleteHomeProfilePicture=async(req:Request,res:Response)=>{
     }
     if(home.profileKey===null){
         throw new ConflictException(`Profile key for home with id ${homeId} does not exist`)
-    }
+ }
     return await prisma.$transaction(async(tx)=>{
         await deleteFromS3(home.profileKey!)
         await tx.home.update({where:{
@@ -130,7 +130,7 @@ export const viewHomeProfilePicture=async(req:Request,res:Response)=>{
         throw new NotFoundException(`home with id ${homeId} and userId ${req.user?.userId} not found`)
     }
     if(home.profileKey===null){
-        throw new ConflictException(`Profile key for home with id ${homeId} does not exist`)
+        return;  
     }
 
     return res.json(await generatePresignedUrl(home.profileKey))

@@ -14,7 +14,10 @@ console.info(`Generating code for password reset for user with email ${req.query
 if(!email){
     throw new ConflictException("email query param expected")
 }
+   
 const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+
 return await prisma.$transaction(async(tx)=>{
    const user= await tx.user.findUnique({where:{
         email:email
@@ -25,6 +28,16 @@ return await prisma.$transaction(async(tx)=>{
     if(user.isEmailConfirmed===false){
         throw new ConflictException("Needs email to be verified for feature to work")
     }
+    await prisma.passwordReset.updateMany({
+  where: {
+    email:email,
+    revoked: false,
+    
+  },
+  data: {
+    revoked: true
+  }
+});
     const code=generateAlphaNumCode()
     const codeToBeSaved=await bcrypt.hash(code, 10)
     const resetText= `Hi ${user.name},

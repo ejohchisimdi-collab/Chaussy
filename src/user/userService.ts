@@ -151,18 +151,28 @@ export const viewProfilePicture=async(req:Request,res:Response)=>{
 }
 
 
-export function generateAlphaNumCode(length = 8) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+export function generateAlphaNumCode(length = 6) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // uppercase + numbers only
   let code = '';
   for (let i = 0; i < length; i++) {
-    code += chars[randomInt(0, chars.length)];
+    code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
 }
 
 export const  generateEmailConfirmationCode=async(req:Request,res:Response)=>{
  console.info(`Generating email confirmation code for user with id ${req.user?.userId}`)
-    const user=await prisma.user.findUnique({where:{
+ await prisma.confirmEmail.updateMany({
+  where: {
+    userId: req.user!.userId,
+    revoked: false
+  },
+  data: {
+    revoked: true
+  }
+});   
+ 
+ const user=await prisma.user.findUnique({where:{
         id:req.user?.userId
     }})
     const code=generateAlphaNumCode();
@@ -212,7 +222,7 @@ console.info(`Confirming email for user with id ${req.user?.userId}  `)
     revoked:false
 
   },orderBy:{
-    issuedAt:"desc"
+
   }})
 
   if(emailVerification===null){
@@ -227,7 +237,10 @@ console.info(`Confirming email for user with id ${req.user?.userId}  `)
     throw new ConflictException("Code has expired")
   }
 
-  if(!await bcrypt.compare(code as string, emailVerification.emailCode)){
+
+const isMatch = await bcrypt.compare(code as string, emailVerification.emailCode);
+
+  if(!await bcrypt.compare((code as string).trim(), emailVerification.emailCode)){
     throw new ConflictException("Code not valid")
   }
 
@@ -242,6 +255,8 @@ console.info(`Confirming email for user with id ${req.user?.userId}  `)
   },data:{
     revoked:true
   }})
+
+  
 
   console.info("Email confirmed successfully")
   return res.json(toUserDTO(user))
